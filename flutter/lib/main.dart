@@ -284,10 +284,16 @@ void runMultiWindow(
 
 void runConnectionManagerScreen() async {
   await initEnv(kAppTypeConnectionManager);
+  // AniDesk: ANIDESK_TEMA verilmisse tema sabit; verilmediyse sistem temasi izlenir (pencere acikken Windows temasi degisince guncellenir).
+  final aniTema = (Platform.environment['ANIDESK_TEMA'] ?? '').trim().toLowerCase();
   _runApp(
     '',
     const DesktopServerPage(),
-    MyTheme.currentThemeMode(),
+    aniTema == 'acik'
+        ? ThemeMode.light
+        : aniTema == 'koyu'
+            ? ThemeMode.dark
+            : ThemeMode.system,
   );
   final hide = await bind.cmGetConfig(name: "hide_cm") == 'true';
   gFFI.serverModel.hideCm = hide;
