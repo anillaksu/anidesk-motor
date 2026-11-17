@@ -322,7 +322,7 @@ class ChatModel with ChangeNotifier {
         await setWindowsCmWindowBounds(kConnectionManagerWindowSizeClosedChat);
       } else {
         await windowManager.setSizeAlignment(
-            kConnectionManagerWindowSizeClosedChat, Alignment.topRight);
+            kConnectionManagerWindowSizeClosedChat, Alignment.center);
       }
     } else {
       final currentSelectedTab =
@@ -338,7 +338,7 @@ class ChatModel with ChangeNotifier {
         await setWindowsCmWindowBounds(kConnectionManagerWindowSizeOpenChat);
       } else {
         await windowManager.setSizeAlignment(
-            kConnectionManagerWindowSizeOpenChat, Alignment.topRight);
+            kConnectionManagerWindowSizeOpenChat, Alignment.center);
       }
       _isShowCMSidePage = !_isShowCMSidePage;
       notifyListeners();

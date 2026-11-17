@@ -1,6 +1,7 @@
 // original cm window in Sciter version.
 
 import 'dart:async';
+import 'dart:io' show Platform;
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -30,16 +31,58 @@ import '../../models/server_model.dart';
 /// are different widgets.
 bool _cmClosedByOperator = false;
 
-/// AniDesk: baslaticinin Tema.cs degerleri.
-const Color _aniZemin = Color(0xFF0B0A10);
-const Color _aniYuzey = Color(0xFF12101A);
-const Color _aniAltin = Color(0xFFD4A853);
-const Color _aniAltinAcik = Color(0xFFE6C37A);
-const Color _aniSinyal = Color(0xFF4FD0DC);
-const Color _aniInk100 = Color(0xFFE8E2D9);
-const Color _aniInk300 = Color(0xFFB5A089);
-const Color _aniCizgi = Color(0x46D4A853);
+/// AniDesk: baslaticinin Tema.cs degerleri (koyu = Tema m=0, aydinlik = Tema m=1).
+/// Secim: ANIDESK_TEMA=acik|koyu (baslatici Seceneklerinden gelir), yoksa Windows AppsUseLightTheme.
+bool _aniAcikMi() {
+  final e = (Platform.environment['ANIDESK_TEMA'] ?? '').trim().toLowerCase();
+  if (e == 'acik') return true;
+  if (e == 'koyu') return false;
+  return WidgetsBinding.instance.platformDispatcher.platformBrightness ==
+      Brightness.light;
+}
+
+/// Sistem temasi degisince (platformBrightness) yeniden cizilmek icin build icinde cagrilir.
+bool _aniDinle(BuildContext context) {
+  MediaQuery.platformBrightnessOf(context);
+  return _aniAcikMi();
+}
+
+Color get _aniZemin => _aniAcikMi() ? Color(0xFFF7F4EC) : Color(0xFF0B0A10);
+Color get _aniZemin2 => _aniAcikMi() ? Color(0xFFFCFAF5) : Color(0xFF17131F);
+Color get _aniYuzey => _aniAcikMi() ? Color(0xFFFFFFFF) : Color(0xFF12101A);
+Color get _aniYuzeyUst => _aniAcikMi() ? Color(0xFFFFFFFF) : Color(0xFF1B1726);
+Color get _aniAltin => _aniAcikMi() ? Color(0xFFA07216) : Color(0xFFD4A853);
+Color get _aniAltinAcik => _aniAcikMi() ? Color(0xFF7A5408) : Color(0xFFE6C37A);
+Color get _aniSinyal => _aniAcikMi() ? Color(0xFF087680) : Color(0xFF4FD0DC);
+Color get _aniOk => _aniAcikMi() ? Color(0xFF1C7644) : Color(0xFF6FCF97);
+Color get _aniInk100 => _aniAcikMi() ? Color(0xFF2B2832) : Color(0xFFE8E2D9);
+Color get _aniInk300 => _aniAcikMi() ? Color(0xFF5E5964) : Color(0xFFB5A089);
+Color get _aniCizgi => _aniAcikMi() ? Color(0x6EA87A1E) : Color(0x46D4A853);
+Color get _aniPrimUst => _aniAcikMi() ? Color(0xFF9C6C12) : Color(0xFFE6C37A);
+Color get _aniPrimAlt => _aniAcikMi() ? Color(0xFF7E540A) : Color(0xFFD4A853);
+Color get _aniPrimYazi => _aniAcikMi() ? Color(0xFFFFFFFF) : Color(0xFF0B0A10);
 const List<String> _aniFontYedek = ['Segoe UI', 'Tahoma'];
+
+/// Pencere basligi = baslaticiya giden durum (baslatici --cm penceresinin basligini okur).
+/// Protokol: istek bekliyor -> 'AniDesk · destek isteği'; yetki verildi -> 'AniDesk · bağlı';
+/// hepsi bitti -> 'AniDesk · bağlantı sona erdi'.
+const String kAniBaslikIstek = 'AniDesk · destek isteği';
+const String kAniBaslikBagli = 'AniDesk · bağlı';
+const String kAniBaslikBitti = 'AniDesk · bağlantı sona erdi';
+
+void _aniBaslikUygula() {
+  final cl = gFFI.serverModel.clients;
+  if (cl.isEmpty) return;
+  String t;
+  if (cl.any((c) => !c.authorized && !c.disconnected)) {
+    t = kAniBaslikIstek;
+  } else if (cl.any((c) => c.authorized && !c.disconnected)) {
+    t = kAniBaslikBagli;
+  } else {
+    t = kAniBaslikBitti;
+  }
+  windowManager.setTitle(t);
+}
 
 TextStyle _aniYazi(double size, Color color, {FontWeight? weight}) => TextStyle(
     fontFamily: 'Segoe UI Variable Text',
@@ -111,13 +154,16 @@ class _DesktopServerPageState extends State<DesktopServerPage>
       ],
       child: Consumer<ServerModel>(
         builder: (context, serverModel, child) {
+          final acik = _aniDinle(context);
           final body = Scaffold(
             backgroundColor: Colors.transparent,
             body: DefaultTextStyle.merge(
               style: TextStyle(
                   fontFamily: 'Segoe UI Variable Text',
                   fontFamilyFallback: _aniFontYedek),
-              child: ConnectionManager(),
+              child: Theme(
+                  data: acik ? MyTheme.lightTheme : MyTheme.darkTheme,
+                  child: ConnectionManager()),
             ),
           );
           return isLinux
@@ -129,7 +175,7 @@ class _DesktopServerPageState extends State<DesktopServerPage>
                         gradient: LinearGradient(
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
-                            colors: [Color(0xFF17131F), _aniZemin]),
+                            colors: [_aniZemin2, _aniZemin]),
                         border: Border.all(color: _aniCizgi)),
                     child: body,
                   ));
@@ -166,7 +212,7 @@ class ConnectionManagerState extends State<ConnectionManager>
               gFFI.chatModel.showChatPage(MessageKey(client.peerId, client.id));
             });
           }
-          windowManager.setTitle('AniDesk · destek isteği');
+          _aniBaslikUygula();
           gFFI.cmFileModel.updateCurrentClientId(client.id);
         }
       }
@@ -201,6 +247,7 @@ class ConnectionManagerState extends State<ConnectionManager>
   @override
   Widget build(BuildContext context) {
     final serverModel = Provider.of<ServerModel>(context);
+    _aniDinle(context);
     pointerHandler(PointerEvent e) {
       if (serverModel.cmHiddenTimer != null) {
         serverModel.cmHiddenTimer!.cancel();
@@ -234,6 +281,8 @@ class ConnectionManagerState extends State<ConnectionManager>
               controller: serverModel.tabController,
               selectedBorderColor: MyTheme.accent,
               maxLabelWidth: 100,
+              tabStripOverride:
+                  serverModel.clients.length <= 1 ? const _AppIcon() : null,
               tail: null, //buildScrollJumper(),
               tabBuilder: (key, icon, label, themeConf) {
                 final client = serverModel.clients
@@ -390,26 +439,97 @@ class ConnectionManagerState extends State<ConnectionManager>
 
 Widget buildConnectionCard(Client client) {
   return Consumer<ServerModel>(
-    builder: (context, value, child) => Column(
-      mainAxisAlignment: MainAxisAlignment.start,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      key: ValueKey(client.id),
-      children: [
-        _CmHeader(client: client),
-        client.type_() == ClientType.file ||
-                client.type_() == ClientType.portForward ||
-                client.type_() == ClientType.terminal ||
-                client.disconnected
-            ? Offstage()
-            : _PrivilegeBoard(client: client),
-        Expanded(
-          child: Align(
-            alignment: Alignment.bottomCenter,
-            child: _CmControlPanel(client: client),
+    builder: (context, value, child) {
+      _aniDinle(context);
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        key: ValueKey(client.id),
+        children: [
+          // Ust bolum kaydirilabilir: pencere/DPI ne olursa olsun hicbir oge kesilmez, dugmeler altta sabit.
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _CmHeader(client: client),
+                  client.type_() == ClientType.file ||
+                          client.type_() == ClientType.portForward ||
+                          client.type_() == ClientType.terminal ||
+                          client.disconnected
+                      ? Offstage()
+                      : _IzinOzeti(client: client),
+                ],
+              ),
+            ),
           ),
-        )
-      ],
-    ).paddingSymmetric(vertical: 4.0, horizontal: 8.0),
+          _CmControlPanel(client: client),
+        ],
+      ).paddingSymmetric(vertical: 4.0, horizontal: 8.0);
+    },
+  );
+}
+
+/// AniDesk isareti: baslaticidaki altin kalkan + A (Ortak.cs MonogramCiz ile ayni geometri).
+class _KalkanBoyaci extends CustomPainter {
+  final Color ust, alt, yazi;
+  _KalkanBoyaci(this.ust, this.alt, this.yazi);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final sx = size.width / 16, sy = size.height / 20;
+    Offset o(double x, double y) => Offset(x * sx, y * sy);
+    final yol = Path()
+      ..moveTo(0, 2 * sy)
+      ..lineTo(8 * sx, 0)
+      ..lineTo(16 * sx, 2 * sy)
+      ..lineTo(16 * sx, 10 * sy)
+      ..cubicTo(16 * sx, 15 * sy, 11 * sx, 18 * sy, 8 * sx, 20 * sy)
+      ..cubicTo(5 * sx, 18 * sy, 0, 15 * sy, 0, 10 * sy)
+      ..close();
+    canvas.drawPath(
+        yol,
+        Paint()
+          ..shader = LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [ust, alt])
+              .createShader(Offset.zero & size));
+    canvas.drawPath(
+        yol,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1
+          ..color = yazi.withOpacity(0.25));
+    final kalem = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.8 * sx
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..color = yazi;
+    canvas.drawPath(
+        Path()
+          ..moveTo(4.6 * sx, 13.5 * sy)
+          ..lineTo(8 * sx, 5.2 * sy)
+          ..lineTo(11.4 * sx, 13.5 * sy),
+        kalem);
+    canvas.drawLine(o(5.9, 10.6), o(10.1, 10.6), kalem);
+  }
+
+  @override
+  bool shouldRepaint(covariant _KalkanBoyaci old) =>
+      old.ust != ust || old.alt != alt || old.yazi != yazi;
+}
+
+Widget _aniKalkan(double yukseklik) {
+  return SizedBox(
+    width: yukseklik * 0.8,
+    height: yukseklik,
+    child: CustomPaint(
+        painter: _KalkanBoyaci(
+            _aniAcikMi() ? Color(0xFFAC7A1A) : Color(0xFFF6D690),
+            _aniAcikMi() ? Color(0xFF7E540A) : Color(0xFFC88C3E),
+            _aniAcikMi() ? Color(0xFFFFFFFF) : Color(0xFF1A1208))),
   );
 }
 
@@ -418,10 +538,23 @@ class _AppIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 8.0),
-      child: Text('AniDesk',
-          style: _aniYazi(13, _aniAltin, weight: FontWeight.bold)),
+    _aniDinle(context);
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onPanStart: (_) => windowManager.startDragging(),
+      child: Container(
+        margin: EdgeInsets.symmetric(horizontal: 8.0),
+        alignment: Alignment.centerLeft,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _aniKalkan(18),
+            SizedBox(width: 8),
+            Text('AniDesk',
+                style: _aniYazi(13, _aniAltin, weight: FontWeight.bold)),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -484,13 +617,17 @@ class _CmHeaderState extends State<_CmHeader>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final String baslik =
-        !client.authorized ? 'Teknisyeniniz bağlanmak istiyor' : 'Uzaktan destek';
+    _aniDinle(context);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _aniBaslikUygula());
+    final String baslik = 'Teknisyeniniz bağlanmak istiyor';
     final String durum = client.authorized
         ? (client.disconnected
             ? 'Bağlantı sona erdi'
             : 'Bağlı · teknisyeniniz ekranınızı görüyor')
         : 'İzninizi bekliyor';
+    final Color durumRenk = client.authorized && !client.disconnected
+        ? _aniSinyal
+        : (client.disconnected ? _aniInk300 : _aniSinyal);
     String? tur;
     if (client.type_() == ClientType.terminal) tur = 'Terminal';
     if (client.type_() == ClientType.file) tur = 'Dosya aktarımı';
@@ -498,6 +635,9 @@ class _CmHeaderState extends State<_CmHeader>
     if (client.portForward.isNotEmpty) {
       tur = 'Port Forward: ${client.portForward}';
     }
+    final String ad = client.name.trim();
+    final String kimlikSatiri =
+        'Bağlanan: ${ad.isNotEmpty ? ad + ' · ' : ''}${client.peerId}';
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
       padding: EdgeInsets.fromLTRB(12, 4, 8, 8),
@@ -510,7 +650,7 @@ class _CmHeaderState extends State<_CmHeader>
               children: [
                 Text(baslik,
                     style:
-                        _aniYazi(24, _aniAltinAcik, weight: FontWeight.bold)),
+                        _aniYazi(22, _aniAltinAcik, weight: FontWeight.bold)),
                 SizedBox(height: 14.0),
                 Container(
                   width: double.infinity,
@@ -520,7 +660,7 @@ class _CmHeaderState extends State<_CmHeader>
                     gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: [Color(0xFF1B1726), _aniYuzey]),
+                        colors: [_aniYuzeyUst, _aniYuzey]),
                     border: Border.all(color: _aniSinyal.withOpacity(0.45)),
                     boxShadow: [
                       BoxShadow(
@@ -536,8 +676,8 @@ class _CmHeaderState extends State<_CmHeader>
                           'Bilgisayarınızda yardımcı olmak için uzaktan bağlanmak istiyor. İzin verirseniz ekranınızı görebilir.',
                           style: _aniYazi(14, _aniInk100)),
                       SizedBox(height: 8),
-                      Text('Bağlanan kimlik: ${client.peerId}',
-                          style: _aniYazi(11, _aniInk300)),
+                      Text(kimlikSatiri,
+                          softWrap: true, style: _aniYazi(12, _aniInk300)),
                       if (tur != null)
                         Text(tur, style: _aniYazi(12, _aniInk300)),
                     ],
@@ -546,10 +686,12 @@ class _CmHeaderState extends State<_CmHeader>
                 SizedBox(height: 12.0),
                 Row(
                   children: [
-                    Text('●  ', style: _aniYazi(12, _aniSinyal)),
-                    Text(durum,
-                        style:
-                            _aniYazi(14, _aniSinyal, weight: FontWeight.bold)),
+                    Text('●  ', style: _aniYazi(12, durumRenk)),
+                    Flexible(
+                      child: Text(durum,
+                          style: _aniYazi(14, durumRenk,
+                              weight: FontWeight.bold)),
+                    ),
                     if (client.authorized && !client.disconnected)
                       Obx(
                         () => Text(
@@ -625,261 +767,71 @@ class _CmHeaderState extends State<_CmHeader>
   }
 }
 
-class _PrivilegeBoard extends StatefulWidget {
+/// Salt-okunur izin ozeti: degerler gercek baglanti izinlerinden (client.*) okunur; baslaticidaki
+/// Seceneklerle (motor ayari enable-*) birebir ayni. Duzenlenemez.
+class _IzinOzeti extends StatelessWidget {
   final Client client;
 
-  const _PrivilegeBoard({Key? key, required this.client}) : super(key: key);
+  const _IzinOzeti({Key? key, required this.client}) : super(key: key);
 
-  @override
-  State<StatefulWidget> createState() => _PrivilegeBoardState();
-}
-
-class _PrivilegeBoardState extends State<_PrivilegeBoard> {
-  late final client = widget.client;
-  bool _acik = false;
-  Widget buildPermissionIcon(bool enabled, IconData iconData,
-      Function(bool)? onTap, String tooltipText,
-      {required bool canModify}) {
-    return Tooltip(
-      message: "$tooltipText: ${enabled ? "ON" : "OFF"}",
-      waitDuration: Duration.zero,
-      child: Container(
-        decoration: BoxDecoration(
-          color: enabled
-              ? (canModify ? _aniAltin : _aniAltin.withOpacity(0.6))
-              : Color(0xFF2A2634),
-          borderRadius: BorderRadius.circular(10.0),
-        ),
-        padding: EdgeInsets.all(8.0),
-        child: InkWell(
-          onTap: canModify
-              ? () =>
-                  checkClickTime(widget.client.id, () => onTap?.call(!enabled))
-              : null,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              Expanded(
-                child: Icon(
-                  iconData,
-                  color: enabled ? _aniZemin : _aniInk300,
-                ),
-              ),
-            ],
+  Widget _satir(IconData ikon, String ad, bool acik) {
+    final Color renk = acik ? _aniOk : _aniInk300;
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        children: [
+          Icon(ikon, size: 18, color: renk),
+          SizedBox(width: 10),
+          Expanded(
+            child: Text.rich(
+              TextSpan(children: [
+                TextSpan(text: '$ad: ', style: _aniYazi(13, _aniInk100)),
+                TextSpan(
+                    text: acik ? 'açık' : 'kapalı',
+                    style: _aniYazi(13, renk, weight: FontWeight.bold)),
+              ]),
+            ),
           ),
-        ),
+          Icon(acik ? Icons.check_circle_rounded : Icons.remove_circle_outline,
+              size: 16, color: renk),
+        ],
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final crossAxisCount = 4;
-    final spacing = 10.0;
-    final canModifyPermission =
-        bind.mainGetBuildinOption(key: kOptionEnablePermChangeInAcceptWindow) !=
-            'N';
-    if (!_acik) {
-      return Align(
-        alignment: Alignment.centerLeft,
-        child: TextButton(
-          onPressed: () => setState(() => _acik = true),
-          child: Text('Ayrıntılar  ▾', style: _aniYazi(13, _aniInk300)),
-        ),
-      );
-    }
+    _aniDinle(context);
+    final satirlar = client.type_() == ClientType.camera
+        ? [
+            _satir(Icons.volume_up_rounded, 'Ses', client.audio),
+            _satir(Icons.videocam_rounded, 'Kayıt', client.recording),
+          ]
+        : [
+            _satir(Icons.keyboard, 'Fare ve klavye', client.keyboard),
+            _satir(Icons.upload_file_rounded, 'Dosya aktarımı', client.file),
+            _satir(Icons.volume_up_rounded, 'Ses', client.audio),
+            _satir(Icons.assignment_rounded, 'Pano', client.clipboard),
+          ];
     return Container(
       width: double.infinity,
-      height: 160.0,
-      margin: EdgeInsets.all(5.0),
-      padding: EdgeInsets.all(5.0),
+      margin: EdgeInsets.fromLTRB(5.0, 2.0, 5.0, 8.0),
+      padding: EdgeInsets.fromLTRB(14, 10, 14, 10),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10.0),
+        borderRadius: BorderRadius.circular(12.0),
         color: _aniYuzey,
         border: Border.all(color: _aniCizgi),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            spreadRadius: 1,
-            blurRadius: 1,
-            offset: Offset(0, 1.5),
-          ),
-        ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'İzinler',
-            style: _aniYazi(14, _aniInk100, weight: FontWeight.bold),
-            textAlign: TextAlign.center,
-          ).marginOnly(left: 4.0, bottom: 8.0),
-          Expanded(
-            child: GridView.count(
-              crossAxisCount: crossAxisCount,
-              padding: EdgeInsets.symmetric(horizontal: spacing),
-              mainAxisSpacing: spacing,
-              crossAxisSpacing: spacing,
-              children: client.type_() == ClientType.camera
-                  ? [
-                      buildPermissionIcon(
-                        client.audio,
-                        Icons.volume_up_rounded,
-                        (enabled) {
-                          bind.cmSwitchPermission(
-                              connId: client.id,
-                              name: "audio",
-                              enabled: enabled);
-                          setState(() {
-                            client.audio = enabled;
-                          });
-                        },
-                        translate('Enable audio'),
-                        canModify: canModifyPermission,
-                      ),
-                      buildPermissionIcon(
-                        client.recording,
-                        Icons.videocam_rounded,
-                        (enabled) {
-                          bind.cmSwitchPermission(
-                              connId: client.id,
-                              name: "recording",
-                              enabled: enabled);
-                          setState(() {
-                            client.recording = enabled;
-                          });
-                        },
-                        translate('Enable recording session'),
-                        canModify: canModifyPermission,
-                      ),
-                    ]
-                  : [
-                      buildPermissionIcon(
-                        client.keyboard,
-                        Icons.keyboard,
-                        (enabled) {
-                          bind.cmSwitchPermission(
-                              connId: client.id,
-                              name: "keyboard",
-                              enabled: enabled);
-                          setState(() {
-                            client.keyboard = enabled;
-                          });
-                        },
-                        translate('Enable keyboard/mouse'),
-                        canModify: canModifyPermission,
-                      ),
-                      buildPermissionIcon(
-                        client.clipboard,
-                        Icons.assignment_rounded,
-                        (enabled) {
-                          bind.cmSwitchPermission(
-                              connId: client.id,
-                              name: "clipboard",
-                              enabled: enabled);
-                          setState(() {
-                            client.clipboard = enabled;
-                          });
-                        },
-                        translate('Enable clipboard'),
-                        canModify: canModifyPermission,
-                      ),
-                      buildPermissionIcon(
-                        client.audio,
-                        Icons.volume_up_rounded,
-                        (enabled) {
-                          bind.cmSwitchPermission(
-                              connId: client.id,
-                              name: "audio",
-                              enabled: enabled);
-                          setState(() {
-                            client.audio = enabled;
-                          });
-                        },
-                        translate('Enable audio'),
-                        canModify: canModifyPermission,
-                      ),
-                      buildPermissionIcon(
-                        client.file,
-                        Icons.upload_file_rounded,
-                        (enabled) {
-                          bind.cmSwitchPermission(
-                              connId: client.id,
-                              name: "file",
-                              enabled: enabled);
-                          setState(() {
-                            client.file = enabled;
-                          });
-                        },
-                        translate('Enable file copy and paste'),
-                        canModify: canModifyPermission,
-                      ),
-                      buildPermissionIcon(
-                        client.restart,
-                        Icons.restart_alt_rounded,
-                        (enabled) {
-                          bind.cmSwitchPermission(
-                              connId: client.id,
-                              name: "restart",
-                              enabled: enabled);
-                          setState(() {
-                            client.restart = enabled;
-                          });
-                        },
-                        translate('Enable remote restart'),
-                        canModify: canModifyPermission,
-                      ),
-                      buildPermissionIcon(
-                        client.recording,
-                        Icons.videocam_rounded,
-                        (enabled) {
-                          bind.cmSwitchPermission(
-                              connId: client.id,
-                              name: "recording",
-                              enabled: enabled);
-                          setState(() {
-                            client.recording = enabled;
-                          });
-                        },
-                        translate('Enable recording session'),
-                        canModify: canModifyPermission,
-                      ),
-                      // only windows support block input
-                      if (isWindows)
-                        buildPermissionIcon(
-                          client.blockInput,
-                          Icons.block,
-                          (enabled) {
-                            bind.cmSwitchPermission(
-                                connId: client.id,
-                                name: "block_input",
-                                enabled: enabled);
-                            setState(() {
-                              client.blockInput = enabled;
-                            });
-                          },
-                          translate('Enable blocking user input'),
-                          canModify: canModifyPermission,
-                        ),
-                      if (bind.mainSupportedPrivacyModeImpls() != '[]')
-                        buildPermissionIcon(
-                          client.privacyMode,
-                          Icons.visibility_off,
-                          (enabled) {
-                            bind.cmSwitchPermission(
-                                connId: client.id,
-                                name: "privacy_mode",
-                                enabled: enabled);
-                            setState(() {
-                              client.privacyMode = enabled;
-                            });
-                          },
-                          translate('Enable privacy mode'),
-                          canModify: canModifyPermission,
-                        )
-                    ],
-            ),
-          ),
+          Text('İzinler',
+              style: _aniYazi(14, _aniInk100, weight: FontWeight.bold)),
+          SizedBox(height: 4),
+          ...satirlar,
+          SizedBox(height: 6),
+          Text('İzinleri AniDesk penceresindeki Seçenekler\'den belirlediniz.',
+              style: _aniYazi(11, _aniInk300)),
         ],
       ),
     );
@@ -978,7 +930,7 @@ class _CmControlPanel extends StatelessWidget {
                       color: Colors.white,
                       size: 14,
                     ),
-                    text: "Audio input",
+                    text: "Ses girişi",
                     textColor: Colors.white),
               ),
               Expanded(
@@ -991,7 +943,7 @@ class _CmControlPanel extends StatelessWidget {
                     color: Colors.white,
                     size: 14,
                   ),
-                  text: "Stop voice call",
+                  text: "Sesli aramayı bitir",
                   textColor: Colors.white,
                 ),
               )
@@ -1011,7 +963,7 @@ class _CmControlPanel extends StatelessWidget {
                       color: Colors.white,
                       size: 14,
                     ),
-                    text: "Accept",
+                    text: "Kabul et",
                     textColor: Colors.white),
               ),
               Expanded(
@@ -1024,7 +976,7 @@ class _CmControlPanel extends StatelessWidget {
                     color: Colors.white,
                     size: 14,
                   ),
-                  text: "Dismiss",
+                  text: "Yoksay",
                   textColor: Colors.white,
                 ),
               )
@@ -1037,7 +989,7 @@ class _CmControlPanel extends StatelessWidget {
               color: Colors.purple,
               onClick: () => handleSwitchBack(context),
               icon: Icon(Icons.reply, color: Colors.white),
-              text: "Switch Sides",
+              text: "Tarafları değiştir",
               textColor: Colors.white),
         ),
         Offstage(
@@ -1054,7 +1006,7 @@ class _CmControlPanel extends StatelessWidget {
               color: Colors.white,
               size: 14,
             ),
-            text: 'Elevate',
+            text: 'Yetki yükselt',
             textColor: Colors.white,
           ),
         ),
@@ -1083,7 +1035,7 @@ class _CmControlPanel extends StatelessWidget {
                 color: MyTheme.accent,
                 onClick: handleClose,
                 text: 'Kapat',
-                textColor: Color(0xFF0B0A10))),
+                textColor: _aniPrimYazi)),
       ],
     ).marginOnly(bottom: buttonBottomMargin);
   }
@@ -1109,7 +1061,7 @@ class _CmControlPanel extends StatelessWidget {
             handleElevate(context);
             windowManager.minimize();
           },
-              text: 'Accept and Elevate',
+              text: 'Kabul et ve yetki yükselt',
               icon: Icon(
                 Icons.security_rounded,
                 color: Colors.white,
@@ -1133,7 +1085,7 @@ class _CmControlPanel extends StatelessWidget {
                         windowManager.minimize();
                       },
                       text: 'Bağlantıya izin ver',
-                      textColor: Color(0xFF0B0A10),
+                      textColor: _aniPrimYazi,
                     ),
                   ],
                 ),
@@ -1189,11 +1141,11 @@ class _CmControlPanel extends StatelessWidget {
       decoration: BoxDecoration(
           color: dolgu ? null : color,
           gradient: dolgu
-              ? LinearGradient(colors: [_aniAltinAcik, _aniAltin])
+              ? LinearGradient(colors: [_aniPrimUst, _aniPrimAlt])
               : null,
           borderRadius: borderRadius,
           border:
-              dolgu ? Border.all(color: _aniAltinAcik, width: 1.5) : border,
+              dolgu ? Border.all(color: _aniPrimUst, width: 1.5) : border,
           boxShadow: dolgu
               ? [
                   BoxShadow(

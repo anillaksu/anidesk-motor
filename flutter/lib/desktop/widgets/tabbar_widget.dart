@@ -252,6 +252,8 @@ class DesktopTab extends StatefulWidget {
   final Color? selectedTabBackgroundColor;
   final Color? unSelectedTabBackgroundColor;
   final Color? selectedBorderColor;
+  // AniDesk: doluysa sekme seridi yerine bu gosterilir (tek baglantida isim kesilmesin).
+  final Widget? tabStripOverride;
 
   final DesktopTabController controller;
 
@@ -277,6 +279,7 @@ class DesktopTab extends StatefulWidget {
     this.selectedTabBackgroundColor,
     this.unSelectedTabBackgroundColor,
     this.selectedBorderColor,
+    this.tabStripOverride,
   }) : super(key: key);
 
   static RxString tablabelGetter(String peerId) {
@@ -659,6 +662,9 @@ class _DesktopTabState extends State<DesktopTab>
                         right: 10,
                       ),
                     ),
+                    if (widget.tabStripOverride != null)
+                      Expanded(child: widget.tabStripOverride!)
+                    else
                     Expanded(
                         child: Listener(
                             // handle mouse wheel

@@ -11,7 +11,7 @@ Future<void> setWindowsCmWindowBounds(Size size) async {
   }
   final screen = window?.screen;
   if (window == null || screen == null) {
-    await windowManager.setSizeAlignment(size, Alignment.topRight);
+    await windowManager.setSizeAlignment(size, Alignment.center);
     return;
   }
 
@@ -19,8 +19,8 @@ Future<void> setWindowsCmWindowBounds(Size size) async {
   final scaledSize = size * window.scaleFactor;
   await windowManager.setBounds(
     Rect.fromLTWH(
-      screen.visibleFrame.right - scaledSize.width,
-      screen.visibleFrame.top,
+      screen.visibleFrame.left + (screen.visibleFrame.width - scaledSize.width) / 2,
+      screen.visibleFrame.top + (screen.visibleFrame.height - scaledSize.height) / 2,
       scaledSize.width,
       scaledSize.height,
     ),

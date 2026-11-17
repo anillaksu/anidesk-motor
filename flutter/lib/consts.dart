@@ -354,8 +354,8 @@ extension StringExtension on String {
   String get nonBreaking => replaceAll(' ', String.fromCharCode($nbsp));
 }
 
-const Size kConnectionManagerWindowSizeClosedChat = Size(400, 560);
-const Size kConnectionManagerWindowSizeOpenChat = Size(800, 560);
+const Size kConnectionManagerWindowSizeClosedChat = Size(400, 640);
+const Size kConnectionManagerWindowSizeOpenChat = Size(800, 640);
 // Tabbar transition duration, now we remove the duration
 const Duration kTabTransitionDuration = Duration.zero;
 const double kEmptyMarginTop = 50;
