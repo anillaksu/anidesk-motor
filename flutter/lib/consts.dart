@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hbb/common.dart';
@@ -352,8 +354,8 @@ extension StringExtension on String {
   String get nonBreaking => replaceAll(' ', String.fromCharCode($nbsp));
 }
 
-const Size kConnectionManagerWindowSizeClosedChat = Size(300, 490);
-const Size kConnectionManagerWindowSizeOpenChat = Size(700, 490);
+const Size kConnectionManagerWindowSizeClosedChat = Size(400, 560);
+const Size kConnectionManagerWindowSizeOpenChat = Size(800, 560);
 // Tabbar transition duration, now we remove the duration
 const Duration kTabTransitionDuration = Duration.zero;
 const double kEmptyMarginTop = 50;
@@ -725,3 +727,6 @@ const kCheckSoftwareUpdateFinish = 'check_software_update_finish';
 
 /// AniDesk: yetki yukseltme dugmeleri baglanti penceresinde hep gizli.
 const bool kAniDeskHideElevate = true;
+
+/// AniDesk: ANIDESK_GIZLI=1 ortam degiskeniyle ana pencere hic gosterilmez (sunucu ve --cm calisir).
+final bool kAniDeskGizli = Platform.environment['ANIDESK_GIZLI'] == '1';

@@ -737,6 +737,7 @@ Future<void> windowOnTop(int? id) async {
   print("Bring window '$id' on top");
   if (id == null) {
     // main window
+    if (kAniDeskGizli) return;
     if (stateGlobal.isMinimized) {
       await windowManager.restore();
     }
