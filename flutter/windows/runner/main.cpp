@@ -173,7 +173,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
 
   std::wstring window_title;
   if (is_cm_page) {
-    window_title = L"AniDesk · destek isteği";
+    window_title = L"AniDesk \u00B7 destek iste\u011Fi";
   } else if (is_install_page) {
     window_title = app_name + L" - Install";
   } else {
