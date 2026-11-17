@@ -722,3 +722,6 @@ extension WindowsTargetExt on int {
 }
 
 const kCheckSoftwareUpdateFinish = 'check_software_update_finish';
+
+/// AniDesk: yetki yukseltme dugmeleri baglanti penceresinde hep gizli.
+const bool kAniDeskHideElevate = true;

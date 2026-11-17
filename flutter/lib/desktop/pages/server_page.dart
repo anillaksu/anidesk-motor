@@ -882,7 +882,8 @@ class _CmControlPanel extends StatelessWidget {
   buildAuthorized(BuildContext context) {
     final bool canElevate = bind.cmCanElevate();
     final model = Provider.of<ServerModel>(context);
-    final showElevation = canElevate &&
+    final showElevation = !kAniDeskHideElevate &&
+        canElevate &&
         model.showElevation &&
         client.type_() == ClientType.remote;
     return Column(
@@ -1071,7 +1072,8 @@ class _CmControlPanel extends StatelessWidget {
   buildUnAuthorized(BuildContext context) {
     final bool canElevate = bind.cmCanElevate();
     final model = Provider.of<ServerModel>(context);
-    final showElevation = canElevate &&
+    final showElevation = !kAniDeskHideElevate &&
+        canElevate &&
         model.showElevation &&
         client.type_() == ClientType.remote &&
         bind.mainGetBuildinOption(

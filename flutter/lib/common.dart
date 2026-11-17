@@ -249,16 +249,16 @@ class MyTheme {
   MyTheme._();
 
   static const Color grayBg = Color(0xFFEFEFF2);
-  static const Color accent = Color(0xFF0071FF);
-  static const Color accent50 = Color(0x770071FF);
-  static const Color accent80 = Color(0xAA0071FF);
-  static const Color canvasColor = Color(0xFF212121);
+  static const Color accent = Color(0xFFD4A853);
+  static const Color accent50 = Color(0x77D4A853);
+  static const Color accent80 = Color(0xAAD4A853);
+  static const Color canvasColor = Color(0xFF0B0A10);
   static const Color border = Color(0xFFCCCCCC);
-  static const Color idColor = Color(0xFF00B6F0);
+  static const Color idColor = Color(0xFF4FD0DC);
   static const Color darkGray = Color.fromARGB(255, 148, 148, 148);
-  static const Color cmIdColor = Color(0xFF21790B);
+  static const Color cmIdColor = Color(0xFF6FCF97);
   static const Color dark = Colors.black87;
-  static const Color button = Color(0xFF2C8CFF);
+  static const Color button = Color(0xFFC4783C);
   static const Color hoverBorder = Color(0xFF999999);
 
   // ListTile
@@ -471,9 +471,9 @@ class MyTheme {
   static ThemeData darkTheme = ThemeData(
     useMaterial3: false,
     brightness: Brightness.dark,
-    hoverColor: Color.fromARGB(255, 45, 46, 53),
-    scaffoldBackgroundColor: Color(0xFF18191E),
-    dialogBackgroundColor: Color(0xFF18191E),
+    hoverColor: Color.fromARGB(255, 28, 25, 38),
+    scaffoldBackgroundColor: Color(0xFF0B0A10),
+    dialogBackgroundColor: Color(0xFF0B0A10),
     appBarTheme: AppBarTheme(
       shadowColor: Colors.transparent,
     ),
@@ -483,14 +483,14 @@ class MyTheme {
         borderRadius: BorderRadius.circular(18.0),
         side: BorderSide(
           width: 1,
-          color: Color(0xFF24252B),
+          color: Color(0xFF12101A),
         ),
       ),
     ),
     scrollbarTheme: scrollbarThemeDark,
     inputDecorationTheme: (isDesktop || isWebDesktop)
         ? InputDecorationTheme(
-            fillColor: Color(0xFF24252B),
+            fillColor: Color(0xFF12101A),
             filled: true,
             isDense: true,
             border: OutlineInputBorder(
@@ -509,7 +509,7 @@ class MyTheme {
         color: accent80,
       ),
     ),
-    cardColor: Color(0xFF24252B),
+    cardColor: Color(0xFF12101A),
     visualDensity: VisualDensity.adaptivePlatformDensity,
     tabBarTheme: const TabBarTheme(
       labelColor: Colors.white70,
@@ -543,7 +543,7 @@ class MyTheme {
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
-        backgroundColor: Color(0xFF24252B),
+        backgroundColor: Color(0xFF12101A),
         side: BorderSide(color: Colors.white12, width: 0.5),
         disabledForegroundColor: Colors.white70,
         foregroundColor: Colors.white70,
@@ -558,11 +558,11 @@ class MyTheme {
     listTileTheme: listTileTheme,
     menuBarTheme: MenuBarThemeData(
         style: MenuStyle(
-            backgroundColor: MaterialStatePropertyAll(Color(0xFF121212)))),
+            backgroundColor: MaterialStatePropertyAll(Color(0xFF0B0A10)))),
     colorScheme: ColorScheme.dark(
-      primary: Colors.blue,
+      primary: Color(0xFFD4A853),
       secondary: accent,
-      background: Color(0xFF24252B),
+      background: Color(0xFF12101A),
     ),
     popupMenuTheme: PopupMenuThemeData(
         shape: RoundedRectangleBorder(
